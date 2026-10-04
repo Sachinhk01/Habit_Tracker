@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 
 const N = 10;
@@ -62,6 +62,34 @@ export default function App() {
   const setHabit = (r, v) =>
     setSt((s) => ({ ...s, habits: s.habits.map((h, i) => (i === r ? v : h)) }));
 
+  // Backup and restore
+  const fileRef = useRef(null);
+  const backup = () => {
+    const blob = new Blob([JSON.stringify(st, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `habit-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const restore = (e) => {
+    const f = e.target.files[0];
+    e.target.value = "";
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        const d = JSON.parse(rd.result);
+        if (!d || !Array.isArray(d.habits) || typeof d.months !== "object") throw new Error();
+        if (confirm("Restore this backup? It replaces everything saved in this browser.")) setSt(d);
+      } catch {
+        alert("This file is not a valid habit tracker backup.");
+      }
+    };
+    rd.readAsText(f);
+  };
+
   // Stats
   let right = 0, wrong = 0, best = 0, active = 0;
   const rowRight = [];
@@ -97,6 +125,9 @@ export default function App() {
           <button className="btn" aria-label="Next month"
             onClick={() => setCur(new Date(cur.getFullYear(), cur.getMonth() + 1, 1))}>&gt;</button>
           <button className="btn" onClick={() => window.print()}>Print</button>
+          <button className="btn" onClick={backup}>Backup</button>
+          <button className="btn" onClick={() => fileRef.current.click()}>Restore</button>
+          <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={restore} />
         </div>
       </header>
 
