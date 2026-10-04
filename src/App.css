@@ -65,3 +65,12 @@ textarea { width: 100%; min-height: 130px; border: 1px solid var(--line); border
 footer { margin-top: 14px; color: var(--mute); font-size: 12px; }
 
 @media print { .btn, .brushes { display: none; } body { background: #fff; } }
+
+
+.center { text-align: center; margin-top: 20vh; color: var(--mute); }
+.auth { max-width: 360px; margin: 12vh auto 0; padding: 24px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 12px; }
+.auth h1 { font-size: 24px; }
+.auth label { display: grid; gap: 4px; font-weight: 600; }
+.auth input { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 9px 10px; }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.err { color: var(--bad); margin: 0; }

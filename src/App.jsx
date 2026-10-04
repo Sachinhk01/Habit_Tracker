@@ -6,29 +6,24 @@ const SLEEP = [9, 8, 7, 6, 5];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const blank = () => ({ marks: {}, sleep: {}, notes: "" });
 
-const KEY = "habit-tracker-v2";
-
-function load() {
-  try {
-    const s = JSON.parse(localStorage.getItem(KEY));
-    if (s && s.habits) return s;
-  } catch {}
-  return { name: "", habits: Array(N).fill(""), months: {} };
-}
-
 // Sleep chart geometry
 const CW = 30, CH = 36, LEFT = 64, TOP = 30;
 
-export default function App() {
-  const [st, setSt] = useState(load);
+export default function Tracker({ initial, onSave, onLogout }) {
+  const [st, setSt] = useState(initial);
   const [cur, setCur] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   const [brush, setBrush] = useState("right");
 
+  const [sync, setSync] = useState("Saved");
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify(st)); } catch {}
+    setSync("Saving...");
+    const t = setTimeout(() => {
+      onSave(st).then(() => setSync("Saved")).catch(() => setSync("Not saved. Check your connection."));
+    }, 700);
+    return () => clearTimeout(t);
   }, [st]);
 
   const key = `${cur.getFullYear()}-${cur.getMonth() + 1}`;
@@ -128,6 +123,7 @@ export default function App() {
           <button className="btn" onClick={backup}>Backup</button>
           <button className="btn" onClick={() => fileRef.current.click()}>Restore</button>
           <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={restore} />
+          <button className="btn" onClick={() => onSave(st).catch(() => {}).finally(onLogout)}>Log out</button>
         </div>
       </header>
 
@@ -214,7 +210,7 @@ export default function App() {
         value={m.notes} onChange={(e) => patchMonth((mo) => ({ ...mo, notes: e.target.value }))} />
 
       <footer>
-        Saved in this browser only.{" "}
+        {sync}.{" "}
         <button className="btn" onClick={() => {
           if (confirm(`Clear all marks, sleep and notes for ${MONTHS[cur.getMonth()]} ${cur.getFullYear()}? Habit names stay.`))
             setSt((s) => { const mo = { ...s.months }; delete mo[key]; return { ...s, months: mo }; });
