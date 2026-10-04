@@ -59,6 +59,14 @@ export default function Tracker({ initial, onSave, onLogout }) {
 
   // Backup and restore
   const fileRef = useRef(null);
+  const [toast, setToast] = useState(null);
+  const [ask, setAsk] = useState(null);
+  const notify = (text, kind = "ok") => setToast({ text, kind, id: Date.now() });
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
   const backup = () => {
     const blob = new Blob([JSON.stringify(st, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -67,6 +75,7 @@ export default function Tracker({ initial, onSave, onLogout }) {
     a.download = `habit-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    notify("Backup downloaded.");
   };
   const restore = (e) => {
     const f = e.target.files[0];
@@ -77,9 +86,13 @@ export default function Tracker({ initial, onSave, onLogout }) {
       try {
         const d = JSON.parse(rd.result);
         if (!d || !Array.isArray(d.habits) || typeof d.months !== "object") throw new Error();
-        if (confirm("Restore this backup? It replaces everything saved in this browser.")) setSt(d);
+        setAsk({
+          text: "Restore this backup? It replaces everything saved in this account.",
+          yes: "Restore",
+          run: () => { setSt(d); notify("Backup restored."); },
+        });
       } catch {
-        alert("This file is not a valid habit tracker backup.");
+        notify("This file is not a valid habit tracker backup.", "bad");
       }
     };
     rd.readAsText(f);
@@ -211,11 +224,27 @@ export default function Tracker({ initial, onSave, onLogout }) {
 
       <footer>
         {sync}.{" "}
-        <button className="btn" onClick={() => {
-          if (confirm(`Clear all marks, sleep and notes for ${MONTHS[cur.getMonth()]} ${cur.getFullYear()}? Habit names stay.`))
+        <button className="btn" onClick={() => setAsk({
+          text: `Clear all marks, sleep and notes for ${MONTHS[cur.getMonth()]} ${cur.getFullYear()}? Habit names stay.`,
+          yes: "Clear month",
+          run: () => {
             setSt((s) => { const mo = { ...s.months }; delete mo[key]; return { ...s, months: mo }; });
-        }}>Clear this month</button>
+            notify("Month cleared.");
+          },
+        })}>Clear this month</button>
       </footer>
+      {toast && <div className={"toast " + toast.kind} role="status">{toast.text}</div>}
+      {ask && (
+        <div className="overlay" onClick={() => setAsk(null)}>
+          <div className="dialog" role="alertdialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <p>{ask.text}</p>
+            <div className="row">
+              <button className="btn" onClick={() => setAsk(null)}>Cancel</button>
+              <button className="btn primary" autoFocus onClick={() => { ask.run(); setAsk(null); }}>{ask.yes}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
