@@ -1,6 +1,18 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
- 
-// base "./" lets the build work on Netlify, Vercel, GitHub Pages, or any static host
-export default defineConfig({ plugins: [react()], base: "./" });
- 
+
+export default defineConfig({
+  plugins: [react()],
+  base: "./",
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          firebase: ["firebase/app", "firebase/auth", "firebase/firestore"],
+          react: ["react", "react-dom"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 700,
+  },
+});
