@@ -22,6 +22,7 @@ export default function Root() {
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
     const off = onAuthStateChanged(auth, async (u) => {
@@ -65,7 +66,19 @@ export default function Root() {
         <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
       <label>Password
-        <input type="password" required autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} />
+        <span className="pw">
+          <input type={show ? "text" : "password"} required autoComplete="current-password"
+            value={pw} onChange={(e) => setPw(e.target.value)} />
+          <button type="button" className="eye" onClick={() => setShow(!show)}
+            aria-label={show ? "Hide password" : "Show password"} aria-pressed={show}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+              <circle cx="12" cy="12" r="3" />
+              {show && <path d="M3 3l18 18" />}
+            </svg>
+          </button>
+        </span>
       </label>
       {err && <p className="err" role="alert">{err}</p>}
       <button className="btn primary" disabled={busy}>{busy ? "Please wait..." : "Log in"}</button>
